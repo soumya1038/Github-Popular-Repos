@@ -1,9 +1,17 @@
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
+
 import LanguageFilterItem from '../LanguageFilterItem'
 import RepositoryItem from '../RepositoryItem'
 
 import './index.css'
+
+const apiStatusConstants = {
+  initial: 'INITIAL',
+  success: 'SUCCESS',
+  failure: 'FAILURE',
+  inProgress: 'IN_PROGRESS',
+}
 
 const languageFiltersData = [
   {id: 'ALL', language: 'All'},
@@ -13,109 +21,121 @@ const languageFiltersData = [
   {id: 'CSS', language: 'CSS'},
 ]
 
-// Write your code here
 class GithubPopularRepos extends Component {
   state = {
-    isLoading: true,
-    initialRepositoryList: [],
-    filterLanguage: 'ALL',
-    response: false,
+    apiStatus: apiStatusConstants.initial,
+    repositoriesData: [],
+    activeLanguageFilterId: languageFiltersData[0].id,
   }
 
   componentDidMount() {
-    this.getRepositoryItemList()
+    this.getRepositories()
   }
 
-  getRepositoryItemList = async () => {
-    const {filterLanguage} = this.state
-    const apiUrl = `https://apis.ccbp.in/popular-repos?language=${filterLanguage}`
-    const options = {
-      method: 'GET',
-    }
+  getRepositories = async () => {
+    const {activeLanguageFilterId} = this.state
+    this.setState({
+      apiStatus: apiStatusConstants.inProgress,
+    })
+    const apiUrl = `https://apis.ccbp.in/popular-repos?language=${activeLanguageFilterId}`
     const response = await fetch(apiUrl)
     if (response.ok) {
-      const fetchData = await response.json()
-      const updatedDate = fetchData.popular_repos.map(eachData => ({
-        avatarUrl: eachData.avatar_url,
-        forksCount: eachData.forks_count,
-        issuesCount: eachData.issues_count,
-        name: eachData.name,
-        starsCount: eachData.stars_count,
-        id: eachData.id,
+      const fetchedData = await response.json()
+      const updatedData = fetchedData.popular_repos.map(eachRepository => ({
+        id: eachRepository.id,
+        imageUrl: eachRepository.avatar_url,
+        name: eachRepository.name,
+        starsCount: eachRepository.stars_count,
+        forksCount: eachRepository.forks_count,
+        issuesCount: eachRepository.issues_count,
       }))
       this.setState({
-        initialRepositoryList: updatedDate,
-        isLoading: false,
-        response: false,
+        repositoriesData: updatedData,
+        apiStatus: apiStatusConstants.success,
       })
     } else {
-      this.setState({isLoading: false, response: true})
+      this.setState({
+        apiStatus: apiStatusConstants.failure,
+      })
     }
-    // console.log(response.ok)
   }
 
-  onFilterButtonClick = id => {
-    this.setState(
-      {filterLanguage: id, isLoading: true},
-      this.getRepositoryItemList,
-    )
-  }
+  renderLoadingView = () => (
+    <div data-testid="loader">
+      <Loader color="#0284c7" height={80} type="ThreeDots" width={80} />
+    </div>
+  )
 
-  renderRepositoryItem = () => {
-    const {isLoading, initialRepositoryList} = this.state
+  renderFailureView = () => (
+    <div className="failure-view-container">
+      <img
+        src="https://assets.ccbp.in/frontend/react-js/api-failure-view.png"
+        alt="failure view"
+        className="failure-view-image"
+      />
+      <h1 className="error-message">Something Went Wrong</h1>
+    </div>
+  )
+
+  renderRepositoriesListView = () => {
+    const {repositoriesData} = this.state
 
     return (
-      <ul className="display-repository-container">
-        {!isLoading &&
-          initialRepositoryList.map(each => (
-            <RepositoryItem eachItem={each} key={each.id} />
-          ))}
+      <ul className="repositories-list">
+        {repositoriesData.map(eachRepository => (
+          <RepositoryItem
+            key={eachRepository.id}
+            repositoryDetails={eachRepository}
+          />
+        ))}
       </ul>
     )
   }
 
-  renderFaliRequest = () => {
-    const {response} = this.state
+  renderRepositories = () => {
+    const {apiStatus} = this.state
+
+    switch (apiStatus) {
+      case apiStatusConstants.success:
+        return this.renderRepositoriesListView()
+      case apiStatusConstants.failure:
+        return this.renderFailureView()
+      case apiStatusConstants.inProgress:
+        return this.renderLoadingView()
+      default:
+        return null
+    }
+  }
+
+  setActiveLanguageFilterId = newFilterId => {
+    this.setState({activeLanguageFilterId: newFilterId}, this.getRepositories)
+  }
+
+  renderLanguageFiltersList = () => {
+    const {activeLanguageFilterId} = this.state
 
     return (
-      <>
-        {response && (
-          <div>
-            <img
-              src="https://assets.ccbp.in/frontend/react-js/api-failure-view.png"
-              alt="faliur view"
-            />
-            <h1>Something Went Wrong</h1>
-          </div>
-        )}
-      </>
+      <ul className="filters-list">
+        {languageFiltersData.map(eachLanguageFilter => (
+          <LanguageFilterItem
+            key={eachLanguageFilter.id}
+            isActive={eachLanguageFilter.id === activeLanguageFilterId}
+            languageFilterDetails={eachLanguageFilter}
+            setActiveLanguageFilterId={this.setActiveLanguageFilterId}
+          />
+        ))}
+      </ul>
     )
   }
 
   render() {
-    const {isLoading, filterLanguage} = this.state
     return (
-      <div className="bg-container">
-        <div className="header-container">
-          <h1>Popular</h1>
-          <ul className="language-filter-button-container">
-            {languageFiltersData.map(eachData => (
-              <LanguageFilterItem
-                eachData={eachData}
-                key={eachData.id}
-                onFilterButtonClick={this.onFilterButtonClick}
-                isActive={filterLanguage === eachData.id}
-              />
-            ))}
-          </ul>
+      <div className="app-container">
+        <div className="responsive-container">
+          <h1 className="heading">Popular</h1>
+          {this.renderLanguageFiltersList()}
+          {this.renderRepositories()}
         </div>
-        {isLoading && (
-          <div data-testid="loader">
-            <Loader type="ThreeDots" color="#0284c7" height={80} width={80} />
-          </div>
-        )}
-        {this.renderRepositoryItem()}
-        {this.renderFaliRequest()}
       </div>
     )
   }

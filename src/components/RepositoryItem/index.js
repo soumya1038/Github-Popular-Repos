@@ -2,36 +2,42 @@
 import './index.css'
 
 const RepositoryItem = props => {
-  const {eachItem} = props
-  const {avatarUrl, forksCount, issuesCount, starsCount, name} = eachItem
+  const {repositoryDetails} = props
+  const {
+    name,
+    imageUrl,
+    starsCount,
+    forksCount,
+    issuesCount,
+  } = repositoryDetails
 
   return (
-    <li className="each-Container">
-      <img src={avatarUrl} alt={name} className="avater-image" />
-      <h1>{name}</h1>
-      <div className="each-details-container">
+    <li className="repository-item">
+      <img className="repository-image" src={imageUrl} alt={name} />
+      <h1 className="repository-name">{name}</h1>
+      <div className="stats-container">
         <img
+          className="stats-icon"
           src="https://assets.ccbp.in/frontend/react-js/stars-count-img.png"
           alt="stars"
-          className="logo-image"
         />
-        <p>{starsCount} stars</p>
+        <p className="stats-text">{starsCount} stars</p>
       </div>
-      <div className="each-details-container">
+      <div className="stats-container">
         <img
+          className="stats-icon"
           src="https://assets.ccbp.in/frontend/react-js/forks-count-img.png"
           alt="forks"
-          className="logo-image"
         />
-        <p>{forksCount} forks</p>
+        <p className="stats-text">{forksCount} forks</p>
       </div>
-      <div className="each-details-container">
+      <div className="stats-container">
         <img
+          className="stats-icon"
           src="https://assets.ccbp.in/frontend/react-js/issues-count-img.png"
           alt="open issues"
-          className="logo-image"
         />
-        <p>{issuesCount} issues</p>
+        <p className="stats-text">{issuesCount} open issues</p>
       </div>
     </li>
   )
