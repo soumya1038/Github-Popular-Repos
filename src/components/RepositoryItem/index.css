@@ -1,0 +1,25 @@
+/* Write your CSS here */
+
+/*  */
+.each-Container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  margin: 10px;
+}
+.avater-image {
+  height: 100px;
+  width: 100px;
+}
+.each-details-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.logo-image {
+  height: 30px;
+  width: 30px;
+  margin-right: 10px;
+}
